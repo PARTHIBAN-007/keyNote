@@ -1,0 +1,19 @@
+from src.config import get_settings
+from src.db.interfaces.postgres import PostgreSQLDatabase
+from src.schemas.database.config import PostgreSQLSettings
+
+
+def make_database():
+    """Factory function to create a database instance."""
+    settings = get_settings()
+
+    config = PostgreSQLSettings(
+        database_url=settings.postgres_database_url,
+        echo_sql=settings.postgres_echo_sql,
+        pool_size=settings.postgres_pool_size,
+        max_overflow=settings.postgres_max_overflow,
+    )
+
+    database = PostgreSQLDatabase(config=config)
+    database.startup()
+    return database
