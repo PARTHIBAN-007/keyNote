@@ -27,6 +27,11 @@ class Settings(BaseConfigSettings):
     postgres_max_overflow: int = 0
 
 
+    ollama_host:str = "http://localhost:11434"
+    ollama_model:str = "gemma3:1b"
+    ollama_timeout:int = 300
+
+
     @field_validator("postgres_database_url")
     @classmethod
     def validate_database_url(cls, v: str) -> str:
