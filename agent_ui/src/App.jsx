@@ -6,6 +6,7 @@ import Calendar from "./components/Calendar";
 import Modal from "./components/Modal";
 import EventForm from "./components/EventForm";
 import EventDetails from "./components/EventDetails";
+import ChatWindow from "./components/ChatWindow";
 
 const API_URL = "http://localhost:8000/events/";
 
@@ -27,6 +28,7 @@ function App() {
   const [modalType, setModalType] = useState(""); // "view" | "create" | "edit" | "details"
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [chatMode, setChatMode] = useState(false); // Full screen chat mode
 
   useEffect(() => {
     fetchEvents();
@@ -119,8 +121,11 @@ function App() {
   };
 
   const handleChatWithAI = () => {
-    // Placeholder for AI chat popup
-    alert("AI chat about this event coming soon!");
+    setChatMode(true);
+  };
+
+  const handleExitChat = () => {
+    setChatMode(false);
   };
 
   const eventsByDate = groupEventsByDate(events);
@@ -128,7 +133,38 @@ function App() {
 
   return (
     <Layout>
-      <div className="flex w-full h-full gap-4 p-4">
+      {/* Full screen chat mode */}
+      {chatMode && selectedEvent && (
+        <div className="w-full min-h-screen flex flex-col bg-slate-100 overflow-auto">
+          {/* Header */}
+          <div className="flex items-center gap-3 p-4 border-b border-slate-200 bg-white sticky top-0 z-10">
+            <button
+              onClick={handleExitChat}
+              className="p-2 hover:bg-slate-200 rounded-lg transition"
+              title="Back to events"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <div>
+              <h2 className="text-lg font-bold text-slate-900">{selectedEvent.event_name}</h2>
+              <p className="text-xs text-slate-500">Chat with AI about this event</p>
+            </div>
+          </div>
+          {/* Chat Container - Centered and wider */}
+          <div className="flex-1 flex items-center justify-center p-4 overflow-auto">
+            <div className="w-full max-w-5xl h-[80vh] bg-white rounded-lg shadow-lg border border-slate-200 overflow-hidden flex flex-col">
+              <ChatWindow event={selectedEvent} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Normal event management view */}
+      {!chatMode && (
+        <>
+          <div className="flex w-full h-full gap-4 p-4">
         {/* Event List Section - 3/4 width */}
         <div className="w-3/4 flex flex-col max-h-[calc(100vh-8rem)]">
           <div className="bg-white rounded-lg shadow border border-slate-200 p-5 mb-4 flex items-center justify-between">
@@ -235,6 +271,8 @@ function App() {
           />
         )}
       </Modal>
+        </>
+      )}
     </Layout>
   );
 }
