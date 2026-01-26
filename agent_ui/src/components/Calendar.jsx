@@ -3,12 +3,15 @@ import React, { useState } from "react";
 const daysInMonth = (month, year) => new Date(year, month + 1, 0).getDate();
 const getFirstDayOfWeek = (month, year) => new Date(year, month, 1).getDay();
 
-// Check if an event spans across a given date
+// Check if an event spans across a given date (inclusive)
 const eventSpansDate = (event, dateStr) => {
   const eventStart = new Date(event.start_time);
   const eventEnd = new Date(event.end_time);
+  // Normalize times to start of day for inclusive comparison
+  eventStart.setHours(0,0,0,0);
+  eventEnd.setHours(0,0,0,0);
   const checkDate = new Date(dateStr + "T00:00:00");
-  
+  checkDate.setHours(0,0,0,0);
   return checkDate >= eventStart && checkDate <= eventEnd;
 };
 

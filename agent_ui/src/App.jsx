@@ -13,10 +13,19 @@ const API_URL = "http://localhost:8000/events/";
 function groupEventsByDate(events) {
   const map = {};
   events.forEach((event) => {
-    const date = new Date(event.start_time);
-    const dateStr = date.toISOString().slice(0, 10);
-    if (!map[dateStr]) map[dateStr] = [];
-    map[dateStr].push(event);
+    const start = new Date(event.start_time);
+    const end = new Date(event.end_time);
+    // normalize to start of day
+    const cur = new Date(start);
+    cur.setHours(0, 0, 0, 0);
+    const last = new Date(end);
+    last.setHours(0, 0, 0, 0);
+    while (cur <= last) {
+      const dateStr = cur.toISOString().slice(0, 10);
+      if (!map[dateStr]) map[dateStr] = [];
+      map[dateStr].push(event);
+      cur.setDate(cur.getDate() + 1);
+    }
   });
   return map;
 }
