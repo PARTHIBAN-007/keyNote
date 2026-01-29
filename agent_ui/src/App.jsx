@@ -10,21 +10,55 @@ import ChatWindow from "./components/ChatWindow";
 
 const API_URL = "http://localhost:8000/events/";
 
+// Helper: Extract datetime-local format from ISO string with timezone
+function extractDateTimeLocal(isoString) {
+  // Example: "2026-01-20T15:30:00+05:30" → "2026-01-20T15:30"
+  const datePart = isoString.split('T')[0];
+  const timePart = isoString.split('T')[1].substring(0, 5); // Get HH:MM
+  return `${datePart}T${timePart}`;
+}
+
+// Helper: Format event datetime for display
+function formatEventDateTime(isoString) {
+  // Example: "2026-01-20T15:30:00+05:30"
+  const dateStr = isoString.split('T')[0];
+  const timePart = isoString.split('T')[1].substring(0, 5); // Get HH:MM
+  
+  const date = new Date(dateStr + 'T00:00:00');
+  const dateFormatted = date.toLocaleDateString('en-IN', { 
+    weekday: 'short', 
+    year: 'numeric', 
+    month: 'short', 
+    day: 'numeric'
+  });
+  
+  // Format time as HH:MM
+  return `${dateFormatted} ${timePart}`;
+}
+
 function groupEventsByDate(events) {
   const map = {};
   events.forEach((event) => {
-    const start = new Date(event.start_time);
-    const end = new Date(event.end_time);
-    // normalize to start of day
-    const cur = new Date(start);
-    cur.setHours(0, 0, 0, 0);
-    const last = new Date(end);
-    last.setHours(0, 0, 0, 0);
-    while (cur <= last) {
-      const dateStr = cur.toISOString().slice(0, 10);
+    const startDateStr = event.start_time.split('T')[0];
+    const endDateStr = event.end_time.split('T')[0];
+    
+    // Parse dates from the date strings to handle multi-day events
+    const start = new Date(startDateStr + 'T00:00:00');
+    const end = new Date(endDateStr + 'T00:00:00');
+    
+    let current = new Date(start);
+    
+    // Iterate through each day using local date values (not UTC conversion)
+    while (current <= end) {
+      // Create dateStr in YYYY-MM-DD format using local date
+      const year = current.getFullYear();
+      const month = String(current.getMonth() + 1).padStart(2, '0');
+      const day = String(current.getDate()).padStart(2, '0');
+      const dateStr = `${year}-${month}-${day}`;
+      
       if (!map[dateStr]) map[dateStr] = [];
       map[dateStr].push(event);
-      cur.setDate(cur.getDate() + 1);
+      current.setDate(current.getDate() + 1);
     }
   });
   return map;
@@ -38,14 +72,17 @@ function App() {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [loading, setLoading] = useState(false);
   const [chatMode, setChatMode] = useState(false); // Full screen chat mode
+  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
+  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
 
   useEffect(() => {
     fetchEvents();
-  }, []);
+  }, [currentMonth, currentYear]);
 
   const fetchEvents = async () => {
     setLoading(true);
     try {
+      // Fetch all events - you can modify this to fetch only for the current month if backend supports it
       const res = await fetch(API_URL);
       const data = await res.json();
       setEvents(data);
@@ -183,9 +220,12 @@ function App() {
             </div>
             <button
               onClick={handleCreateEvent}
-              className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-semibold transition shadow flex items-center gap-2 text-lg"
+              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold transition shadow flex items-center gap-2 text-lg"
             >
-              ➕ New Event
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              New Event
             </button>
           </div>
           <div className="flex-1 bg-white rounded-lg shadow border border-slate-200 overflow-hidden flex flex-col">
@@ -195,7 +235,14 @@ function App() {
 
         {/* Calendar Section - 1/4 width - Independent size */}
         <div className="w-1/4 flex flex-col max-h-[calc(100vh-8rem)]">
-          <Calendar events={events} onDateClick={handleDateClick} />
+          <Calendar 
+            events={events} 
+            onDateClick={handleDateClick}
+            onMonthChange={(month, year) => {
+              setCurrentMonth(month);
+              setCurrentYear(year);
+            }}
+          />
         </div>
       </div>
 
@@ -208,10 +255,13 @@ function App() {
         {modalType === "view" && (
           <div>
             <div className="mb-4 pb-4 border-b-2 border-slate-200">
-              <h3 className="text-xl font-bold text-slate-900 mb-4">📅 {selectedDate}</h3>
-              <button onClick={handleCreateEvent} className="w-full px-4 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-semibold transition flex items-center justify-center gap-2 text-lg">
-              ➕ New Event
-            </button>
+              <h3 className="text-xl font-bold text-slate-900 mb-4">Events for {selectedDate}</h3>
+              <button onClick={handleCreateEvent} className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold transition flex items-center justify-center gap-2 text-lg">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                New Event
+              </button>
             </div>
             {eventsForSelectedDate.length === 0 ? (
               <div className="text-slate-500 text-center py-8">No events on this date</div>
@@ -220,11 +270,14 @@ function App() {
                 {eventsForSelectedDate.map((event) => (
                   <li 
                     key={event.id || event.event_id || event.created_at} 
-                    className="bg-indigo-50 rounded-lg p-3 cursor-pointer hover:bg-indigo-100 transition border-l-4 border-indigo-500" 
+                    className="bg-blue-50 rounded-lg p-4 cursor-pointer hover:bg-blue-100 transition border-l-4 border-blue-500 space-y-1" 
                     onClick={() => handleEventClick(event)}
                   >
                     <div className="font-semibold text-slate-900">{event.event_name}</div>
-                    <div className="text-xs text-slate-600 mt-1">{new Date(event.start_time).toLocaleTimeString()}</div>
+                    <div className="text-xs text-slate-600">
+                      <div>Start: {formatEventDateTime(event.start_time)}</div>
+                      <div>End: {formatEventDateTime(event.end_time)}</div>
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -233,7 +286,7 @@ function App() {
         )}
         {modalType === "create" && (
           <div>
-            <h3 className="text-xl font-bold text-slate-900 mb-4">✨ Create New Event</h3>
+            <h3 className="text-xl font-bold text-slate-900 mb-4">Create New Event</h3>
             <EventForm 
               onSubmit={handleSaveEvent} 
               onCancel={() => {
@@ -253,7 +306,7 @@ function App() {
         )}
         {modalType === "edit" && selectedEvent && (
           <div>
-            <h3 className="text-xl font-bold text-slate-900 mb-4">✏️ Edit Event</h3>
+            <h3 className="text-xl font-bold text-slate-900 mb-4">Edit Event</h3>
             <EventForm 
               onSubmit={handleSaveEvent} 
               onCancel={() => {
@@ -263,8 +316,8 @@ function App() {
                 event_name: selectedEvent.event_name,
                 organizer: selectedEvent.organizer,
                 chief_guest_name: selectedEvent.chief_guest_name,
-                start_time: selectedEvent.start_time.replace('Z', '').slice(0, 16),
-                end_time: selectedEvent.end_time.replace('Z', '').slice(0, 16),
+                start_time: extractDateTimeLocal(selectedEvent.start_time),
+                end_time: extractDateTimeLocal(selectedEvent.end_time),
                 transcription: selectedEvent.transcription || ""
               }}
             />

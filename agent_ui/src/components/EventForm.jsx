@@ -31,7 +31,7 @@ const EventForm = ({ onSubmit, onCancel, initialData }) => {
           value={form.event_name} 
           onChange={handleChange} 
           required 
-          className="w-full border border-slate-300 rounded-lg p-3 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100" 
+          className="w-full border border-slate-300 rounded-lg p-3 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100" 
           placeholder="Enter event name" 
         />
       </div>
@@ -42,7 +42,7 @@ const EventForm = ({ onSubmit, onCancel, initialData }) => {
           value={form.organizer} 
           onChange={handleChange} 
           required 
-          className="w-full border border-slate-300 rounded-lg p-3 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100" 
+          className="w-full border border-slate-300 rounded-lg p-3 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100" 
           placeholder="Enter organizer name" 
         />
       </div>
@@ -53,7 +53,7 @@ const EventForm = ({ onSubmit, onCancel, initialData }) => {
           value={form.chief_guest_name} 
           onChange={handleChange} 
           required 
-          className="w-full border border-slate-300 rounded-lg p-3 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100" 
+          className="w-full border border-slate-300 rounded-lg p-3 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100" 
           placeholder="Enter chief guest name" 
         />
       </div>
@@ -66,7 +66,7 @@ const EventForm = ({ onSubmit, onCancel, initialData }) => {
             value={form.start_time} 
             onChange={handleChange} 
             required 
-            className="w-full border border-slate-300 rounded-lg p-3 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100" 
+            className="w-full border border-slate-300 rounded-lg p-3 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100" 
           />
         </div>
         <div>
@@ -77,7 +77,7 @@ const EventForm = ({ onSubmit, onCancel, initialData }) => {
             value={form.end_time} 
             onChange={handleChange} 
             required 
-            className="w-full border border-slate-300 rounded-lg p-3 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100" 
+            className="w-full border border-slate-300 rounded-lg p-3 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100" 
           />
         </div>
       </div>
@@ -87,7 +87,7 @@ const EventForm = ({ onSubmit, onCancel, initialData }) => {
           name="transcription" 
           value={form.transcription} 
           onChange={handleChange} 
-          className="w-full border border-slate-300 rounded-lg p-3 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100" 
+          className="w-full border border-slate-300 rounded-lg p-3 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100" 
           placeholder="Add transcription notes (optional)" 
           rows="3" 
         />
@@ -96,14 +96,14 @@ const EventForm = ({ onSubmit, onCancel, initialData }) => {
         <button 
           type="button" 
           onClick={onCancel} 
-          className="px-6 py-2 rounded-lg border border-slate-300 hover:bg-slate-100 text-slate-700 font-semibold transition"
+          className="px-6 py-2 rounded-lg  border border-slate-300 hover:bg-slate-100 text-slate-700 font-semibold transition"
         >
           Cancel
         </button>
         <button 
           type="submit" 
           disabled={loading} 
-          className="px-6 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold transition disabled:opacity-50"
+          className="px-6 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold transition disabled:opacity-50"
         >
           {loading ? "Saving..." : "Save Event"}
         </button>

@@ -23,7 +23,9 @@ async def lifespan(app: FastAPI):
     logger.info("Shutting down RAG API...")
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+    title = "KeyNote AI",
+    lifespan=lifespan)
 
 
 app.add_middleware(

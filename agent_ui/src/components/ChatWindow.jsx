@@ -120,7 +120,7 @@ ${event.transcription ? `Transcription: ${event.transcription}` : ""}
               <div
                 className={`max-w-3xl px-4 py-3 rounded-lg text-sm whitespace-pre-wrap break-words ${
                   msg.role === "user"
-                    ? "bg-indigo-600 text-white rounded-br-none"
+                    ? "bg-blue-600 text-white rounded-br-none"
                     : "bg-white text-slate-900 border border-slate-200 rounded-bl-none"
                 }`}
               >
@@ -153,12 +153,12 @@ ${event.transcription ? `Transcription: ${event.transcription}` : ""}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Type your question..."
           disabled={loading}
-          className="flex-1 px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-100 disabled:text-slate-500 text-sm"
+          className="flex-1 px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-100 disabled:text-slate-500 text-sm"
         />
         <button
           type="submit"
           disabled={loading || !input.trim()}
-          className="px-4 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:bg-slate-400 disabled:cursor-not-allowed transition flex items-center gap-1"
+          className="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-slate-400 disabled:cursor-not-allowed transition flex items-center gap-1"
           title="Send message"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

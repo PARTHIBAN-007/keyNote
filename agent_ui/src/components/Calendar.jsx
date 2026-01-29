@@ -4,18 +4,17 @@ const daysInMonth = (month, year) => new Date(year, month + 1, 0).getDate();
 const getFirstDayOfWeek = (month, year) => new Date(year, month, 1).getDay();
 
 // Check if an event spans across a given date (inclusive)
+// Handles timezone-aware ISO strings properly
 const eventSpansDate = (event, dateStr) => {
-  const eventStart = new Date(event.start_time);
-  const eventEnd = new Date(event.end_time);
-  // Normalize times to start of day for inclusive comparison
-  eventStart.setHours(0,0,0,0);
-  eventEnd.setHours(0,0,0,0);
-  const checkDate = new Date(dateStr + "T00:00:00");
-  checkDate.setHours(0,0,0,0);
-  return checkDate >= eventStart && checkDate <= eventEnd;
+  // Extract date part from ISO strings (handles +05:30 timezone)
+  const eventStartDate = event.start_time.split('T')[0];
+  const eventEndDate = event.end_time.split('T')[0];
+  
+  // Compare date strings directly (YYYY-MM-DD format)
+  return dateStr >= eventStartDate && dateStr <= eventEndDate;
 };
 
-const Calendar = ({ events, onDateClick }) => {
+const Calendar = ({ events, onDateClick, onMonthChange }) => {
   const today = new Date();
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
@@ -31,6 +30,9 @@ const Calendar = ({ events, onDateClick }) => {
     } else {
       setCurrentMonth(currentMonth - 1);
     }
+    if (onMonthChange) {
+      onMonthChange(currentMonth === 0 ? 11 : currentMonth - 1, currentMonth === 0 ? currentYear - 1 : currentYear);
+    }
   };
   
   const nextMonth = () => {
@@ -39,6 +41,9 @@ const Calendar = ({ events, onDateClick }) => {
       setCurrentYear(currentYear + 1);
     } else {
       setCurrentMonth(currentMonth + 1);
+    }
+    if (onMonthChange) {
+      onMonthChange(currentMonth === 11 ? 0 : currentMonth + 1, currentMonth === 11 ? currentYear + 1 : currentYear);
     }
   };
 
@@ -57,9 +62,9 @@ const Calendar = ({ events, onDateClick }) => {
           key={dateStr}
           className={`rounded font-semibold text-sm transition-all aspect-square flex items-center justify-center ${
             hasEvent 
-              ? "bg-emerald-500 text-white shadow hover:bg-emerald-600 hover:shadow-md" 
+              ? "bg-green-500 text-white shadow hover:bg-green-600 hover:shadow-md" 
               : isToday 
-              ? "bg-indigo-500 text-white shadow border-2 border-indigo-300 hover:bg-indigo-600" 
+              ? "bg-blue-500 text-white shadow border-2 border-blue-300 hover:bg-blue-600" 
               : "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200"
           }`}
           onClick={() => onDateClick(dateStr)}
@@ -76,7 +81,7 @@ const Calendar = ({ events, onDateClick }) => {
       <div className="flex items-center justify-between mb-4">
         <button 
           onClick={prevMonth} 
-          className="px-3 py-2 rounded border border-indigo-300 hover:bg-indigo-50 text-indigo-600 font-semibold transition text-lg"
+          className="px-3 py-2 rounded border border-blue-300 hover:bg-blue-50 text-blue-600 font-semibold transition text-lg"
         >
           ←
         </button>
@@ -85,7 +90,7 @@ const Calendar = ({ events, onDateClick }) => {
         </div>
         <button 
           onClick={nextMonth}
-          className="px-3 py-2 rounded border border-indigo-300 hover:bg-indigo-50 text-indigo-600 font-semibold transition text-lg"
+          className="px-3 py-2 rounded border border-blue-300 hover:bg-blue-50 text-blue-600 font-semibold transition text-lg"
         >
           →
         </button>
@@ -102,11 +107,11 @@ const Calendar = ({ events, onDateClick }) => {
       
       <div className="mt-4 pt-3 border-t border-slate-200 space-y-2">
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded bg-emerald-500"></div>
+          <div className="w-3 h-3 rounded bg-green-500"></div>
           <span className="text-xs text-slate-600">Event scheduled</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded bg-indigo-500"></div>
+          <div className="w-3 h-3 rounded bg-blue-500"></div>
           <span className="text-xs text-slate-600">Today</span>
         </div>
       </div>
