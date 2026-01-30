@@ -18,14 +18,19 @@ const ChatWindow = ({ event }) => {
     e.preventDefault();
     if (!input.trim()) return;
 
-    // Add user message to chat
-    const userMessage = { role: "user", content: input };
-    setMessages((prev) => [...prev, userMessage]);
-    setInput("");
+    const userPrompt = input; 
+    setInput(""); 
+
+    // 1. Add user message
+    setMessages((prev) => [...prev, { role: "user", content: userPrompt }]);
+    
+    // 2. Add placeholder for assistant message
+    setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
+    
     setLoading(true);
 
     try {
-      // Prepare context from event
+      // 3. Prepare context
       const eventContext = `
 Event: ${event.event_name}
 Organizer: ${event.organizer}
@@ -35,135 +40,117 @@ End: ${new Date(event.end_time).toLocaleString()}
 ${event.transcription ? `Transcription: ${event.transcription}` : ""}
       `.trim();
 
-      const prompt = `Context: ${eventContext}\n\nQuestion: ${input}`;
+      const fullPrompt = `Context: ${eventContext}\n\nQuestion: ${userPrompt}`;
 
-      // Add placeholder for assistant message
-      const aiMessage = { role: "assistant", content: "" };
-      setMessages((prev) => [...prev, aiMessage]);
+      // ---------------------------------------------------------
+      // FIX: Append prompt to URL because backend expects Query Param
+      // ---------------------------------------------------------
+      const url = `http://localhost:8000/stream?prompt=${encodeURIComponent(fullPrompt)}`;
 
-      // Call the backend /stream endpoint
-      const response = await fetch(`http://localhost:8000/stream?prompt=${encodeURIComponent(prompt)}`);
+      const response = await fetch(url, {
+        method: "POST", // Method is still POST
+        headers: {
+          "Content-Type": "application/json",
+        },
+        // Body is removed because prompt is now in the URL
+      });
 
-      if (!response.ok) {
-        throw new Error("Failed to get response from AI");
-      }
+      if (!response.ok) throw new Error("Failed to connect to AI");
 
+      // 4. Read the stream
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
-      let fullResponse = "";
+
+      setLoading(false); 
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
-        const text = decoder.decode(value, { stream: true });
-        const lines = text.split("\n");
+        const chunk = decoder.decode(value, { stream: true });
 
-        for (const line of lines) {
-          if (line.startsWith("data: ")) {
-            try {
-              const data = JSON.parse(line.slice(6));
-              if (data.chunk && data.chunk.response) {
-                fullResponse += data.chunk.response;
-                // Update the last message with accumulated text
-                setMessages((prev) => {
-                  const newMessages = [...prev];
-                  newMessages[newMessages.length - 1].content = fullResponse;
-                  return newMessages;
-                });
-              }
-            } catch (e) {
-              console.error("Failed to parse message:", e);
-            }
-          }
-        }
+        // Update the last message
+        setMessages((prev) => {
+          const newMessages = [...prev];
+          const lastMsgIndex = newMessages.length - 1;
+          newMessages[lastMsgIndex] = {
+            ...newMessages[lastMsgIndex],
+            content: newMessages[lastMsgIndex].content + chunk,
+          };
+          return newMessages;
+        });
       }
+
     } catch (error) {
       console.error("Error sending message:", error);
-      const errorMessage = {
-        role: "assistant",
-        content: `Error: ${error.message}`,
-      };
+      setLoading(false);
       setMessages((prev) => {
-        // Replace the last message if it's empty, otherwise append
         const newMessages = [...prev];
-        if (newMessages.length > 0 && newMessages[newMessages.length - 1].role === "assistant" && newMessages[newMessages.length - 1].content === "") {
-          newMessages[newMessages.length - 1] = errorMessage;
-        } else {
-          newMessages.push(errorMessage);
-        }
+        newMessages[newMessages.length - 1] = {
+            role: "assistant",
+            content: "Sorry, I encountered an error. Please try again."
+        };
         return newMessages;
       });
-    } finally {
-      setLoading(false);
     }
   };
 
   return (
     <div className="w-full h-full flex flex-col">
-      {/* Chat Messages Container */}
-      <div className="flex-1 bg-slate-50 overflow-y-auto overflow-x-hidden border-b border-slate-200 p-4 space-y-3" style={{ minHeight: 0 }}>
+      {/* Messages Area */}
+      <div 
+        className="flex-1 bg-slate-50 overflow-y-auto overflow-x-hidden border-b border-slate-200 p-4 space-y-3" 
+        style={{ minHeight: 0 }}
+      >
         {messages.length === 0 ? (
           <div className="text-slate-500 text-center flex items-center justify-center h-full">
-            <div className="text-sm">
-              <p className="text-xs text-slate-400">
-                Start asking questions about this event
-              </p>
-            </div>
+             <p className="text-sm">Start asking questions about <strong>{event?.event_name}</strong></p>
           </div>
         ) : (
           messages.map((msg, idx) => (
-            <div
-              key={idx}
-              className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-            >
-              <div
-                className={`max-w-3xl px-4 py-3 rounded-lg text-sm whitespace-pre-wrap break-words ${
+            <div key={idx} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+              <div className={`max-w-3xl px-4 py-3 rounded-lg text-sm whitespace-pre-wrap break-words ${
                   msg.role === "user"
                     ? "bg-blue-600 text-white rounded-br-none"
-                    : "bg-white text-slate-900 border border-slate-200 rounded-bl-none"
-                }`}
-              >
+                    : "bg-white text-slate-900 border border-slate-200 rounded-bl-none shadow-sm"
+                }`}>
                 {msg.content}
               </div>
             </div>
           ))
         )}
+        
+        {/* Loading Dots (Only visible before first chunk arrives) */}
         {loading && (
           <div className="flex justify-start">
-            <div className="bg-white text-slate-900 border border-slate-200 px-4 py-3 rounded-lg rounded-bl-none">
-              <div className="flex items-center gap-2">
+             <div className="bg-white px-4 py-3 rounded-lg rounded-bl-none border border-slate-200">
                 <div className="flex gap-1">
-                  <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></div>
-                  <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></div>
-                  <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></div>
+                  <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce delay-150"></div>
+                  <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce delay-300"></div>
                 </div>
-              </div>
-            </div>
+             </div>
           </div>
         )}
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Form */}
+      {/* Input Area */}
       <form onSubmit={sendMessage} className="flex gap-2 p-4 bg-white border-t border-slate-200">
         <input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Type your question..."
+          placeholder="Ask a question..."
           disabled={loading}
-          className="flex-1 px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-100 disabled:text-slate-500 text-sm"
+          className="flex-1 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
         />
         <button
           type="submit"
           disabled={loading || !input.trim()}
-          className="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-slate-400 disabled:cursor-not-allowed transition flex items-center gap-1"
-          title="Send message"
+          className="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-slate-300"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-          </svg>
+          Send
         </button>
       </form>
     </div>
