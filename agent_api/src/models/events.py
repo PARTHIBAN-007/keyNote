@@ -15,6 +15,7 @@ class Event(Base):
     event_name: Mapped[str] = mapped_column(String, index=True)
     organizer: Mapped[str] = mapped_column(String)
     chief_guest_name: Mapped[str] = mapped_column(String)
+    venue: Mapped[str | None] = mapped_column(String)  # New: Venue field
     
     start_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=get_utc_now)
     end_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=get_utc_now)

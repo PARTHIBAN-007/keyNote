@@ -293,13 +293,14 @@ function App() {
                 setShowModal(false);
                 setModalType("");
               }}
+              eventId={null}
               initialData={{ 
                 start_time: selectedDate ? selectedDate + 'T00:00' : '', 
                 end_time: selectedDate ? selectedDate + 'T01:00' : '',
                 event_name: "",
                 organizer: "",
                 chief_guest_name: "",
-                transcription: ""
+                venue: ""
               }} 
             />
           </div>
@@ -312,13 +313,14 @@ function App() {
               onCancel={() => {
                 setModalType("details");
               }}
+              eventId={selectedEvent.id || selectedEvent.event_id}
               initialData={{
                 event_name: selectedEvent.event_name,
                 organizer: selectedEvent.organizer,
                 chief_guest_name: selectedEvent.chief_guest_name,
+                venue: selectedEvent.venue || "",
                 start_time: extractDateTimeLocal(selectedEvent.start_time),
-                end_time: extractDateTimeLocal(selectedEvent.end_time),
-                transcription: selectedEvent.transcription || ""
+                end_time: extractDateTimeLocal(selectedEvent.end_time)
               }}
             />
           </div>

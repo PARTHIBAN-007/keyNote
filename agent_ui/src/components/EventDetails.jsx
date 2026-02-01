@@ -46,6 +46,14 @@ const EventDetails = ({ event, onBack, onChat, onEdit, onDelete }) => {
             <div className="text-slate-700">{event.chief_guest_name}</div>
           </div>
         </div>
+        {event.venue && (
+          <div className="flex items-start gap-3">
+            <div>
+              <div className="font-semibold text-slate-700">Venue</div>
+              <div className="text-slate-700 bg-blue-50 px-3 py-1 rounded inline-block">{event.venue}</div>
+            </div>
+          </div>
+        )}
         <div className="flex items-start gap-3">
           <div>
             <div className="font-semibold text-slate-700">Start Time</div>
@@ -58,14 +66,6 @@ const EventDetails = ({ event, onBack, onChat, onEdit, onDelete }) => {
             <div className="text-slate-700">{formatEventDateTime(event.end_time)}</div>
           </div>
         </div>
-        {event.transcription && (
-          <div className="flex items-start gap-3">
-            <div>
-              <div className="font-semibold text-slate-700">Transcription</div>
-              <div className="text-slate-700 whitespace-pre-line bg-white rounded p-2 mt-1 border border-slate-200">{event.transcription}</div>
-            </div>
-          </div>
-        )}
       </div>
       
       <div className="flex gap-2 mt-4">
