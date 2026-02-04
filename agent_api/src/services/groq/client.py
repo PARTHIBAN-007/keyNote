@@ -4,7 +4,6 @@ from typing import AsyncGenerator, Optional
 
 class GroqClient:
     def __init__(self, api_key: Optional[str] = None):
-        # Reads GROQ_API_KEY from environment by default
         self.client = AsyncGroq(api_key=api_key)
 
     async def health_check(self) -> dict:
