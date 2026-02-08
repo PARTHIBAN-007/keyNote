@@ -1,9 +1,8 @@
 import re
-from typing import List, Optional
+from typing import List, Union
 from uuid import UUID
 
 from loguru import logger
-
 from pydantic import BaseModel
 
 class ChunkMetadata(BaseModel):
@@ -17,9 +16,10 @@ class ChunkMetadata(BaseModel):
     overlap_next:int
 
 class TextChunk(BaseModel):
-    event_id: UUID
-    text:str
-    ChunkMetadata:ChunkMetadata 
+    event_id: Union[str, UUID]
+    text: str
+    raw_content: str
+    metadata: ChunkMetadata 
 
 
 class EventTextChunker:
@@ -35,6 +35,10 @@ class EventTextChunker:
 
     def _split_into_words(self, text: str) -> List[str]:
         return re.findall(r"\S+", text)
+    
+    def _create_context_header(self,name: str, guest: str, venue:str)-> str:
+        """Creates a string of metadata to prepend to the chunk"""
+        return f"Event: {name}. Guest: {guest}. Venue: {venue}. Content: "
 
     def chunk_event(
             self,
@@ -56,20 +60,23 @@ class EventTextChunker:
 
 
         words = self._split_into_words(text)
+        context_header = self._create_context_header(event_name,event_chief_guest,event_venue)
         
         if len(words) < self.min_chunk_size:
+            full_text =  " ".join(words)
             return [TextChunk(
-                text=transcription,
+                text=f"{context_header}{full_text}",
                 event_id=event_id,
+                raw_content = full_text,
                 metadata=ChunkMetadata(
-                    chunk_index=chunk_index,
-                    word_count=len(words[start:end]),
+                    chunk_index=0,
+                    word_count=len(words),
                     event_name=event_name,
                     chief_guest = event_chief_guest,
                     event_organizer = event_organizer,
                     event_venue = event_venue,
-                    overlap_prev=self.overlap_size if start > 0 else 0,
-                    overlap_next=self.overlap_size if end < len(words) else 0
+                    overlap_prev=0,
+                    overlap_next=0
                 )
             )]
 
@@ -84,8 +91,9 @@ class EventTextChunker:
             segment_text = " ".join(words[start:end])
 
             chunk = TextChunk(
-                text=segment_text,
                 event_id=event_id,
+                text=f"{context_header} {segment_text}",
+                raw_content= segment_text,
                 metadata=ChunkMetadata(
                     chunk_index=chunk_index,
                     word_count=len(words[start:end]),
@@ -106,5 +114,3 @@ class EventTextChunker:
                 break
 
         return chunks
-
-    
